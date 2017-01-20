@@ -13,16 +13,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.os.Build;
-import android.util.Log;
 
 import com.unity3d.player.UnityPlayer;
 //import com.unity3d.player.UnityPlayerNativeActivity;
 
 public class UnityNotificationManager extends BroadcastReceiver
 {
-	
-    public static void SetNotification(int id, long delayMs, String title, String message, String ticker, int sound, int vibrate, 
-            int lights, String largeIconResource, String smallIconResource, int bgColor, int executeMode, String unityClass)
+
+    public static void SetNotification(int id, long delayMs, String title, String message, String ticker, int sound, int vibrate,
+                                       int lights, String largeIconResource, String smallIconResource, String bigPictureResource, int bgColor, int executeMode, String unityClass)
     {
         Activity currentActivity = UnityPlayer.currentActivity;
         AlarmManager am = (AlarmManager)currentActivity.getSystemService(Context.ALARM_SERVICE);
@@ -36,26 +35,27 @@ public class UnityNotificationManager extends BroadcastReceiver
         intent.putExtra("vibrate", vibrate == 1);
         intent.putExtra("lights", lights == 1);
         intent.putExtra("l_icon", largeIconResource);
+        intent.putExtra("b_picture", bigPictureResource);
         intent.putExtra("s_icon", smallIconResource);
         intent.putExtra("activity", unityClass);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
-        	if (executeMode == 2)
-        		am.setExactAndAllowWhileIdle(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
-        	else if (executeMode == 1)
-        		am.setExact(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
-        	else
-        		am.set(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
+            if (executeMode == 2)
+                am.setExactAndAllowWhileIdle(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
+            else if (executeMode == 1)
+                am.setExact(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
+            else
+                am.set(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
         }
         else
-        	am.set(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
+            am.set(0, System.currentTimeMillis() + delayMs, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
     }
-    
-    public static void SetRepeatingNotification(int id, long delay, String title, String message, String ticker, long rep, int sound, int vibrate, int lights, 
-    		String largeIconResource, String smallIconResource, int bgColor, String unityClass)
+
+    public static void SetRepeatingNotification(int id, long delay, String title, String message, String ticker, long rep, int sound, int vibrate, int lights,
+                                                String largeIconResource, String smallIconResource, String bigPictureResource, int bgColor, String unityClass)
     {
-    	Activity currentActivity = UnityPlayer.currentActivity;
-    	AlarmManager am = (AlarmManager)currentActivity.getSystemService(Context.ALARM_SERVICE);
+        Activity currentActivity = UnityPlayer.currentActivity;
+        AlarmManager am = (AlarmManager)currentActivity.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(currentActivity, UnityNotificationManager.class);
         intent.putExtra("ticker", ticker);
         intent.putExtra("title", title);
@@ -66,20 +66,22 @@ public class UnityNotificationManager extends BroadcastReceiver
         intent.putExtra("vibrate", vibrate == 1);
         intent.putExtra("lights", lights == 1);
         intent.putExtra("l_icon", largeIconResource);
+        intent.putExtra("b_picture", bigPictureResource);
         intent.putExtra("s_icon", smallIconResource);
         intent.putExtra("activity", unityClass);
-    	am.setRepeating(0, System.currentTimeMillis() + delay, rep, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
+        am.setRepeating(0, System.currentTimeMillis() + delay, rep, PendingIntent.getBroadcast(currentActivity, id, intent, 0));
     }
-    
+
     public void onReceive(Context context, Intent intent)
     {
-    	NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         String ticker = intent.getStringExtra("ticker");
         String title = intent.getStringExtra("title");
         String message = intent.getStringExtra("message");
         String s_icon = intent.getStringExtra("s_icon");
         String l_icon = intent.getStringExtra("l_icon");
+        String b_picture = intent.getStringExtra("b_picture");
         int color = intent.getIntExtra("color", 0);
         String unityClass = intent.getStringExtra("activity");
         Boolean sound = intent.getBooleanExtra("sound", false);
@@ -90,35 +92,41 @@ public class UnityNotificationManager extends BroadcastReceiver
         Resources res = context.getResources();
 
         Class<?> unityClassActivity = null;
-		try 
-		{
-			unityClassActivity = Class.forName(unityClass);
-		} catch (ClassNotFoundException e) 
-		{
-			e.printStackTrace();
-		}
+        try
+        {
+            unityClassActivity = Class.forName(unityClass);
+        } catch (ClassNotFoundException e)
+        {
+            e.printStackTrace();
+        }
 
         Intent notificationIntent = new Intent(context, unityClassActivity);
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
         Notification.Builder builder = new Notification.Builder(context);
-        
+
         builder.setContentIntent(contentIntent)
-        	.setWhen(System.currentTimeMillis())
-        	.setAutoCancel(true)
-        	.setContentTitle(title)
-        	.setContentText(message);
-        
+                .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+                .setContentTitle(title)
+                .setContentText(message);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-        	builder.setColor(color);
-        
+            builder.setColor(color);
+
         if(ticker != null && ticker.length() > 0)
             builder.setTicker(ticker);
-               
-		if (s_icon != null && s_icon.length() > 0)
-			builder.setSmallIcon(res.getIdentifier(s_icon, "drawable", context.getPackageName()));
-		
-		if (l_icon != null && l_icon.length() > 0)
-			builder.setLargeIcon(BitmapFactory.decodeResource(res, res.getIdentifier(l_icon, "drawable", context.getPackageName())));
+
+        if (s_icon != null && s_icon.length() > 0)
+            builder.setSmallIcon(res.getIdentifier(s_icon, "drawable", context.getPackageName()));
+
+        if (l_icon != null && l_icon.length() > 0)
+            builder.setLargeIcon(BitmapFactory.decodeResource(res, res.getIdentifier(l_icon, "drawable", context.getPackageName())));
+
+        if (b_picture != null && b_picture.length() > 0)
+            builder.setStyle(
+                    new Notification.BigPictureStyle().bigPicture(
+                            BitmapFactory.decodeResource(res, res.getIdentifier(b_picture, "drawable", context.getPackageName()))
+                    ).setSummaryText(message));
 
         if(sound)
             builder.setSound(RingtoneManager.getDefaultUri(2));
@@ -130,7 +138,7 @@ public class UnityNotificationManager extends BroadcastReceiver
 
         if(lights)
             builder.setLights(Color.GREEN, 3000, 3000);
-        
+
         Notification notification = builder.build();
         notificationManager.notify(id, notification);
     }
