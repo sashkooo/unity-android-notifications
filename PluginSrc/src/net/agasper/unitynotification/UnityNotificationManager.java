@@ -133,7 +133,7 @@ public class UnityNotificationManager extends BroadcastReceiver
 
         if(vibrate)
             builder.setVibrate(new long[] {
-                    1000L, 1000L
+                    600L, 200L, 100L, 200L
             });
 
         if(lights)
